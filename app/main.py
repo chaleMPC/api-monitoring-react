@@ -72,7 +72,7 @@ ENDPOINTS: list[Endpoint] = [
         params={
             "criteria": {
                 "credentials": [
-                    {"type": "bannerId", "value": "M00270615"}
+                    {"type": "bannerId", "value": "M00251282"}
                 ]
             }
         },
