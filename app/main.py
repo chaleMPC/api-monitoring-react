@@ -1,15 +1,39 @@
 from __future__ import annotations
-
 import time
-from dataclasses import dataclass
-from typing import Any, Optional
-from unittest import result
 import httpx
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse, JSONResponse
+import secrets
 import json
 import urllib.parse
 import os
+from dataclasses import dataclass
+from typing import Any, Optional
+from unittest import result
+from fastapi import FastAPI
+from fastapi import Depends, HTTPException, status
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+
+security = HTTPBasic()
+
+DASH_USER = os.getenv("DASH_USER")
+DASH_PASS = os.getenv("DASH_PASS")
+if not DASH_USER or not DASH_PASS:
+    raise RuntimeError("DASH_USER / DASH_PASS not set")
+
+
+def require_basic_auth(credentials: HTTPBasicCredentials = Depends(security)):
+    correct_user = secrets.compare_digest(credentials.username, DASH_USER)
+    correct_pass = secrets.compare_digest(credentials.password, DASH_PASS)
+
+    if not (correct_user and correct_pass):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+
+    return credentials.username
+
 
 api_key = os.getenv("test_api_key")
 if not api_key:
@@ -171,13 +195,13 @@ async def run_checks_once() -> None:
 
 
 @app.get("/api/status")
-async def api_status() -> JSONResponse:
+async def api_status(user: str = Depends(require_basic_auth)):
     await run_checks_once()
     return JSONResponse({"results": list(LATEST.values())})
 
 
 @app.get("/", response_class=HTMLResponse)
-async def home() -> str:
+async def home(user: str = Depends(require_basic_auth)):
     return """
 <!doctype html>
 <html>
