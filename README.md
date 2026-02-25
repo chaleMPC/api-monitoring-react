@@ -2,7 +2,7 @@
 
 ### Clone the repository
 git clone https://github.com/MontereyPeninsulaCollege/api-monitoring.git  
-cd api-monitor
+cd api-monitoring
 
 ### Create a virtual environment
 python -m venv .venv
